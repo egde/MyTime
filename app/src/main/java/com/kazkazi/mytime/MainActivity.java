@@ -1,5 +1,6 @@
 package com.kazkazi.mytime;
 
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,9 +17,11 @@ import android.widget.TextView;
 
 import com.kazkazi.mytime.entities.Pause;
 import com.kazkazi.mytime.entities.State;
+import com.kazkazi.mytime.entities.Work;
 import com.kazkazi.mytime.services.ServiceFactory;
 import com.kazkazi.mytime.services.SettingsService;
 import com.kazkazi.mytime.services.TimerService;
+import com.kazkazi.mytime.utils.WorkUtils;
 
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
@@ -57,14 +60,7 @@ public class MainActivity extends AppCompatActivity {
                     tvTimeToWork.setText("--:--");
                 } else {
 
-                    Duration totalPause = Duration.ofNanos(0);
-                    for ( Pause p : timerService.getWork().getPauses()) {
-                        LocalDateTime stopped = LocalDateTime.now();
-                        if (p.getStoppedAt() != null) {
-                            stopped = p.getStoppedAt();
-                        }
-                        totalPause = totalPause.plus(Duration.between(p.getStartedAt(), stopped));
-                    }
+                    Duration totalPause = WorkUtils.getTotalPause(timerService.getWork());
 
                     // tvStarted
                     DateTimeFormatter frmtStarted = DateTimeFormatter.ofPattern("EEE d.MM.yyyy HH:mm");
@@ -81,13 +77,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     // tvTimeWorked
-                    Duration durationTimeWorked;
-                    if (timerService.getWork().getState() == State.STOPPED) {
-                        durationTimeWorked = Duration.between(timerService.getWork().getStartedFrom(), timerService.getWork().getEndedAt());
-                    } else {
-                        durationTimeWorked = Duration.between(timerService.getWork().getStartedFrom(), LocalDateTime.now());
-                    }
-                    durationTimeWorked = durationTimeWorked.minus(totalPause);
+                    Duration durationTimeWorked = WorkUtils.getDurationWorked(timerService.getWork());
                     tvTimeWorked.setText(DurationFormatUtils.formatDuration(durationTimeWorked.toMillis(), "HH:mm:ss"));
                     updateButtons();
 
@@ -95,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
                         timerHandler.postDelayed(this, 500);
                     }
                 }
-
 
             }
         };
@@ -113,7 +102,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Snackbar.make(view, "Show all times", Snackbar.LENGTH_SHORT)
-                        .setAction("Action", null).show();
+                        .setAction("Action", (mView) -> {
+                            Intent showWorkTimesIntent = new Intent(mView.getContext(), WorkTimesActivity.class);
+                            startActivity(showWorkTimesIntent);
+                        }).show();
             }
         });
 

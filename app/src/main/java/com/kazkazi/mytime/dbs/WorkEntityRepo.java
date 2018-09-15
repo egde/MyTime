@@ -5,6 +5,9 @@ import android.os.AsyncTask;
 
 import com.kazkazi.mytime.entities.Work;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class WorkEntityRepo {
     private final WorkStoreDao dao;
 
@@ -13,6 +16,9 @@ public class WorkEntityRepo {
         dao = db.workStoreDao();
     }
 
+    public void getAllWork(DBCallback<List<Work>> callback) {
+        new GatAllWorkAsyncTask(dao, callback).execute();
+    }
     public void getLatestWork(DBCallback<Work> callback) {
         new GetLatestWorkAsyncTask(dao, callback).execute();
     }
@@ -92,4 +98,33 @@ public class WorkEntityRepo {
         }
     }
 
+    private static class GatAllWorkAsyncTask extends AsyncTask<Void, Void, List<WorkStoreEntity>>{
+        private final WorkStoreDao dao;
+        private final DBCallback<List<Work>> callback;
+
+        public GatAllWorkAsyncTask(WorkStoreDao dao, DBCallback<List<Work>> callback) {
+            this.dao = dao;
+            this.callback = callback;
+        }
+
+
+        @Override
+        protected List<WorkStoreEntity> doInBackground(Void... voids) {
+            return dao.getAll();
+        }
+
+        @Override
+        protected void onPostExecute(List<WorkStoreEntity>  workStoreEntityList) {
+            super.onPostExecute(workStoreEntityList);
+            if (workStoreEntityList == null || workStoreEntityList.isEmpty()) {
+                callback.onSuccess(null);
+            } else {
+                ArrayList<Work> result = new ArrayList<>();
+                for (WorkStoreEntity w : workStoreEntityList) {
+                    result.add(Work.fromJson(w.getData()));
+                }
+                callback.onSuccess(result);
+            }
+        }
+    }
 }

@@ -17,18 +17,14 @@ public class TimerService {
 
     public TimerService(Application app) {
         repo = new WorkEntityRepo(app);
-        repo.getLatestWork((Work work) -> {
-            this.work = work;
-        });
+        repo.getLatestWork((Work work) -> this.work = work);
     }
 
     public void start() {
         this.work = new Work();
         this.work.setStartedFrom(LocalDateTime.now());
         this.work.setState(State.IN_PROGRESS);
-        repo.insert(work, (WorkStoreEntity response) -> {
-            work.setId(response.getId());
-        });
+        repo.insert(work, (WorkStoreEntity response) -> work.setId(response.getId()));
     }
 
     public void stop() {
@@ -60,5 +56,8 @@ public class TimerService {
 
     public Work getWork() {
         return this.work;
+    }
+
+    public void getAllWork() {
     }
 }
